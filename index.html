@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgroScan — Diagnostic intelligent des cultures</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg: #14140F; --panel: #1B1C14; --gold: #C9A227; --leaf: #7BA968;
+    --rust: #C1552E; --cream: #EFE7D3; --muted: #9C9686; --line: rgba(239,231,211,0.10);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--cream); font-family: 'Inter', sans-serif; }
+  img { max-width: 100%; display: block; }
+  button { font-family: inherit; }
+  .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1.2px; color: var(--gold); text-transform: uppercase; margin-bottom: 14px; }
+  header.top { display: flex; justify-content: space-between; align-items: center; padding: 22px 28px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark { width: 34px; height: 34px; border-radius: 8px; background: var(--gold); display: flex; align-items: center; justify-content: center; }
+  .brand-name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 18px; }
+  .brand-sub { font-size: 11.5px; color: var(--muted); }
+  .risk-badge { font-size: 13px; display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 40px; padding: 48px 28px 40px; max-width: 1080px; margin: 0 auto; align-items: center; }
+  .hero h1 { font-family: 'Fraunces', serif; font-size: clamp(28px, 4vw, 42px); line-height: 1.12; font-weight: 600; margin: 0 0 18px; }
+  .hero p { color: var(--muted); font-size: 15.5px; line-height: 1.6; max-width: 480px; margin: 0; }
+  .lead-stats { display: flex; gap: 28px; margin-top: 26px; font-size: 13px; color: var(--muted); }
+  .lead-stats b { font-family: 'Fraunces', serif; font-size: 22px; color: var(--cream); display: block; font-weight: 600; }
+  .hero-visual { position: relative; display: flex; justify-content: center; align-items: center; height: 220px; }
+  .scan-frame { position: absolute; top: 6%; left: 50%; transform: translateX(-50%); width: 160px; height: 88%; overflow: hidden; pointer-events: none; }
+  .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); box-shadow: 0 0 12px var(--gold); animation: scan 3.2s ease-in-out infinite; }
+  .scan-caption { position: absolute; bottom: -8px; font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 5px; width: 100%; justify-content: center; }
+  @keyframes scan { 0% { top: 6%; } 50% { top: 90%; } 100% { top: 6%; } }
+  .panel { max-width: 1080px; margin: 0 auto 28px; padding: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+  .chips-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+  .chip { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--cream); font-size: 13.5px; cursor: pointer; transition: all .15s ease; }
+  .chip:hover { border-color: var(--gold); }
+  .chip.active { border-color: var(--gold); background: rgba(201,162,39,0.12); color: var(--gold); }
+  .drop { border: 1.5px dashed var(--line); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all .15s ease; }
+  .drop:hover { border-color: var(--gold); background: rgba(201,162,39,0.04); }
+  .drop-title { margin-top: 10px; font-weight: 500; }
+  .drop-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 4px; }
+  .photo-thumb-wrap { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 1; animation: fadeUp .35s ease both; }
+  .photo-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb-x { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: rgba(20,20,15,0.75); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s ease; }
+  .thumb-x:hover { background: var(--rust); }
+  .add-more-tile { border: 1.5px dashed var(--line); border-radius: 10px; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; aspect-ratio: 1; }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .btn-primary { background: var(--gold); color: #14140F; border: none; padding: 11px 22px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s ease; }
+  .btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--cream); border: 1px solid var(--line); padding: 11px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all .15s ease; }
+  .btn-ghost:hover { border-color: var(--gold); }
+  .btn-ghost-small { background: transparent; color: var(--cream); border: 1px solid var(--line); padding: 7px 12px; border-radius: 7px; font-size: 12.5px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s ease; }
+  .btn-ghost-small:hover { border-color: var(--gold); }
+  button:focus-visible, .drop:focus-visible, .chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .error-box { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--rust); border-radius: 8px; color: var(--rust); font-size: 13.5px; display: flex; gap: 8px; align-items: center; animation: fadeUp .35s ease both; }
+  .skeleton-wrap { display: flex; flex-direction: column; gap: 10px; padding: 18px 0; animation: fadeUp .35s ease both; }
+  .skeleton-line { background: linear-gradient(90deg, rgba(239,231,211,0.06) 25%, rgba(239,231,211,0.14) 50%, rgba(239,231,211,0.06) 75%); background-size: 400px 100%; animation: shimmer 1.4s infinite; border-radius: 6px; height: 12px; }
+  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; }
+  .result-card { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); animation: fadeUp .35s ease both; }
+  .result-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .severity-tag { font-size: 11.5px; font-family: 'JetBrains Mono', monospace; border: 1px solid; border-radius: 999px; padding: 3px 10px; height: fit-content; white-space: nowrap; }
+  .diagnosis-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .diagnosis-name { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; flex: 1; }
+  .confidence { font-size: 12.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .result-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .field-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gold); margin-bottom: 5px; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 5px; }
+  .field-value { font-size: 14.5px; line-height: 1.55; color: var(--cream); }
+  .plan-block { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .plan-progress-bar { height: 5px; background: rgba(239,231,211,0.08); border-radius: 999px; overflow: hidden; margin-bottom: 16px; }
+  .plan-progress-fill { height: 100%; background: var(--leaf); border-radius: 999px; transition: width .3s ease; }
+  .plan-list { display: flex; flex-direction: column; gap: 8px; }
+  .plan-item { display: flex; gap: 10px; align-items: flex-start; background: rgba(239,231,211,0.03); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; color: var(--cream); width: 100%; text-align: left; transition: all .15s ease; }
+  .plan-item:hover { border-color: var(--gold); background: rgba(201,162,39,0.05); }
+  .plan-item.done { opacity: 0.55; }
+  .plan-item.done .plan-action { text-decoration: line-through; }
+  .plan-day { font-size: 11.5px; color: var(--gold); font-family: 'JetBrains Mono', monospace; margin-bottom: 2px; }
+  .plan-action { font-size: 14px; }
+  .plan-produit { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .plan-warning { margin-top: 14px; font-size: 12.5px; color: var(--rust); display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; }
+  .result-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); flex-wrap: wrap; gap: 12px; }
+  .feedback-group { display: flex; align-items: center; gap: 8px; }
+  .fb-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--line); background: transparent; color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s ease; }
+  .fb-btn:hover { border-color: var(--gold); }
+  .fb-btn.active-up { border-color: var(--leaf); color: var(--leaf); }
+  .fb-btn.active-down { border-color: var(--rust); color: var(--rust); }
+  .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+  .metric-card { border: 1px solid var(--line); border-radius: 10px; padding: 16px 14px; }
+  .metric-val { font-family: 'Fraunces', serif; font-size: 24px; margin-top: 8px; }
+  .metric-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .sensor-note { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .chart-wrap { display: flex; align-items: flex-end; gap: 14px; height: 120px; margin-bottom: 22px; padding: 0 4px; }
+  .chart-bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; height: 100%; gap: 6px; }
+  .chart-bar { width: 100%; max-width: 34px; background: var(--gold); border-radius: 4px 4px 0 0; min-height: 4px; }
+  .chart-count { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .chart-label { font-size: 11px; color: var(--muted); text-align: center; }
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+  .history-item { display: flex; gap: 12px; align-items: center; }
+  .history-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--line); }
+  .history-title { font-weight: 600; font-size: 14px; }
+  .history-sub { color: var(--muted); font-weight: 400; }
+  .history-time { font-size: 12px; color: var(--muted); }
+  footer.bottom { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 20px; padding: 0 28px; }
+  .search-row { position: relative; margin-bottom: 18px; }
+  .search-row input { width: 100%; background: rgba(239,231,211,0.04); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px 10px 38px; color: var(--cream); font-size: 14px; font-family: inherit; }
+  .search-row input:focus { outline: none; border-color: var(--gold); }
+  .search-row input::placeholder { color: var(--muted); }
+  .search-row .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .disease-list { display: flex; flex-direction: column; gap: 8px; }
+  .disease-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; transition: border-color .15s ease; }
+  .disease-card.open { border-color: var(--gold); }
+  .disease-head { width: 100%; display: flex; align-items: center; gap: 10px; padding: 13px 14px; background: transparent; border: none; color: var(--cream); cursor: pointer; text-align: left; }
+  .disease-head:hover { background: rgba(239,231,211,0.03); }
+  .disease-name { font-weight: 600; font-size: 14.5px; flex: 1; }
+  .disease-type { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .disease-chevron { transition: transform .15s ease; flex-shrink: 0; }
+  .disease-card.open .disease-chevron { transform: rotate(90deg); }
+  .disease-body { padding: 0 14px 16px; display: flex; flex-direction: column; gap: 12px; animation: fadeUp .25s ease both; }
+  .disease-empty { color: var(--muted); font-size: 13.5px; padding: 12px 2px; }
+  .meteo-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 8px; }
+  .meteo-updated { font-size: 11.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .meteo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 16px; }
+  .meteo-card { border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; }
+  .meteo-card-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .meteo-region { font-weight: 600; font-size: 14px; }
+  .meteo-status { font-size: 12.5px; line-height: 1.5; }
+  .meteo-prob { font-size: 11.5px; color: var(--muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; }
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    .photo-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scanline, .fade-up, .skeleton-line, .photo-thumb-wrap, .result-card, .error-box { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------- Data & helpers ---------- */
+const CROPS = [
+  { id: "mil", label: "Mil" },
+  { id: "arachide", label: "Arachide" },
+  { id: "manioc", label: "Manioc" },
+  { id: "mais", label: "Maïs" },
+  { id: "riz", label: "Riz" },
+  { id: "niebe", label: "Niébé" },
+  { id: "tomate", label: "Tomate" },
+  { id: "oignon", label: "Oignon" },
+  { id: "mangue", label: "Mangue" },
+];
+const SENSOR = { humidity: 78, temp: 31, soil: 42 };
+const MAX_PHOTOS = 3;
+const STORAGE_KEY = "agroscan:history";
+
+/* ---------- Régions du Sénégal (14) — pour prévisions météo satellite ---------- */
+const REGIONS = [
+  { name: "Dakar", lat: 14.6928, lon: -17.4467 },
+  { name: "Diourbel", lat: 14.6479, lon: -16.2354 },
+  { name: "Fatick", lat: 14.3390, lon: -16.4110 },
+  { name: "Kaffrine", lat: 14.1059, lon: -15.5504 },
+  { name: "Kaolack", lat: 14.1652, lon: -16.0726 },
+  { name: "Kédougou", lat: 12.5580, lon: -12.1743 },
+  { name: "Kolda", lat: 12.8833, lon: -14.9500 },
+  { name: "Louga", lat: 15.6173, lon: -16.2240 },
+  { name: "Matam", lat: 15.6559, lon: -13.2548 },
+  { name: "Saint-Louis", lat: 16.0179, lon: -16.4896 },
+  { name: "Sédhiou", lat: 12.7081, lon: -15.5569 },
+  { name: "Tambacounda", lat: 13.7707, lon: -13.6673 },
+  { name: "Thiès", lat: 14.7910, lon: -16.9359 },
+  { name: "Ziguinchor", lat: 12.5681, lon: -16.2719 },
+];
+function dakarNow() {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Dakar", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+  const get = (t) => parts.find((p) => p.type === t).value;
+  return { date: `${get("year")}-${get("month")}-${get("day")}`, hour: parseInt(get("hour"), 10) };
+}
+function hourLabel(h) { return `${String(h).padStart(2, "0")}h`; }
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/* ---------- Encyclopédie des maladies (base de référence locale) ---------- */
+const DISEASE_DB = {
+  mil: [
+    { nom: "Mildiou du mil", type: "Fongique", gravite: "Élevée",
+      cause: "Champignon (oomycète) Sclerospora graminicola, favorisé par forte humidité et chaleur ; se transmet par semences et sol contaminés.",
+      symptomes: "Feuilles jaunes striées, duvet blanc-grisâtre sous les feuilles, épis déformés en « balai de sorcière », plants rabougris.",
+      traitement: "Aucun traitement curatif efficace sur plants déjà atteints : arracher et brûler immédiatement les plants malades pour stopper la propagation. Pour les saisons suivantes, traiter les semences au fongicide systémique (métalaxyl) avant semis.",
+      prevention: "Variétés résistantes (souna, sanio améliorées), rotation (éviter mil après mil), semences certifiées, semis moins dense." },
+    { nom: "Charbon du mil (charbon des chandelles)", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon Tolyposporium penicillariae, conservé dans le sol et sur semences, favorisé par l'humidité à la floraison.",
+      symptomes: "Grains transformés en sacs noirs poudreux (spores) remplaçant les grains normaux dans l'épi.",
+      traitement: "Récolter et brûler les épis atteints avant éclatement des sacs de spores. Traitement de semences au fongicide systémique.",
+      prevention: "Variétés résistantes, rotation, semences certifiées saines." },
+    { nom: "Ergot du mil", type: "Fongique — toxique", gravite: "Élevée",
+      cause: "Champignon Claviceps fusiformis infectant les fleurs par temps humide ; produit des sclérotes toxiques (alcaloïdes) dangereux pour l'homme et le bétail.",
+      symptomes: "Miellat sucré et collant sur les épis, puis sclérotes noirs/bruns remplaçant les grains.",
+      traitement: "Trier et éliminer tout grain contaminé avant consommation ou vente — ne jamais consommer un lot suspect. Brûler les résidus. Aucun traitement curatif au champ.",
+      prevention: "Semis à date optimale pour éviter la floraison en période humide, variétés à floraison synchronisée, rotation." },
+    { nom: "Striga (plante parasite)", type: "Parasite", gravite: "Élevée",
+      cause: "Plante parasite des racines dont les graines dorment des années dans le sol et germent stimulées par les racines du mil.",
+      symptomes: "Flétrissement malgré l'arrosage, jaunissement, petites fleurs violettes/roses au pied des plants, rendement effondré.",
+      traitement: "Arrachage manuel systématique avant la floraison du striga pour empêcher son grainage. Culture piège en rotation (niébé, coton).",
+      prevention: "Rotation avec légumineuses (niébé, arachide), fertilisation azotée adéquate, semences certifiées non contaminées." },
+    { nom: "Pourriture des tiges (Fusariose)", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon du sol (Fusarium spp.), favorisé par le stress hydrique et les blessures mécaniques.",
+      symptomes: "Brunissement et pourriture à la base des tiges, verse des plants, dessèchement prématuré.",
+      traitement: "Arracher les plants atteints, éviter l'irrigation excessive, fongicide de sol si disponible.",
+      prevention: "Rotation, bon drainage, éviter les blessures aux tiges lors du sarclage." },
+  ],
+  arachide: [
+    { nom: "Cercosporiose (précoce et tardive)", type: "Fongique", gravite: "Élevée",
+      cause: "Champignons Cercospora arachidicola et Cercosporidium personatum, favorisés par humidité et chaleur, conservés sur résidus de récolte.",
+      symptomes: "Taches brunes à noires circulaires sur les feuilles avec halo jaune, défoliation progressive.",
+      traitement: "Fongicide à base de cuivre (bouillie bordelaise) ou chlorothalonil, en application dès 30-40 jours après semis, à répéter tous les 12-15 jours. Arracher et brûler les résidus après récolte.",
+      prevention: "Rotation de 3 ans hors légumineuses, variétés tolérantes, espacement suffisant pour l'aération, destruction des résidus." },
+    { nom: "Rosette de l'arachide", type: "Viral (vecteur : puceron)", gravite: "Élevée",
+      cause: "Complexe viral transmis par le puceron Aphis craccivora — la maladie la plus dévastatrice de l'arachide en Afrique de l'Ouest.",
+      symptomes: "Chlorose/mosaïque jaune, nanisme sévère, feuilles déformées et rabougries, plants en touffe.",
+      traitement: "Aucun traitement curatif : arracher et détruire immédiatement les plants infectés pour limiter la source virale. Lutter contre le puceron vecteur (extrait de neem ou insecticide).",
+      prevention: "Semis précoce et dense en début de saison des pluies, variétés résistantes recommandées par l'ISRA, bordures de mil comme barrière aux pucerons." },
+    { nom: "Fusariose / pourriture du collet", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon du sol favorisé par sol lourd, excès d'humidité et blessures racinaires.",
+      symptomes: "Flétrissement soudain, brunissement du collet, pourriture des racines, plant s'arrachant facilement.",
+      traitement: "Arracher et brûler les plants atteints, éviter de replanter immédiatement sur la même parcelle, traiter les semences.",
+      prevention: "Rotation longue, bon drainage, semences saines." },
+    { nom: "Aflatoxine (post-récolte)", type: "Fongique — toxique", gravite: "Élevée",
+      cause: "Champignons Aspergillus flavus/parasiticus se développant sur gousses stressées par la sécheresse ou mal séchées/stockées ; produisent une toxine cancérigène.",
+      symptomes: "Gousses ou graines moisies, verdâtres — souvent invisibles sans analyse.",
+      traitement: "Trier et écarter systématiquement les graines moisies ou décolorées ; ne jamais consommer ni vendre un lot suspect.",
+      prevention: "Séchage rapide et complet au soleil (humidité < 8%), stockage dans des sacs propres et secs, jamais sur sol humide." },
+  ],
+  manioc: [
+    { nom: "Mosaïque africaine du manioc (CMD)", type: "Viral (vecteur : mouche blanche)", gravite: "Élevée",
+      cause: "Virus transmis par la mouche blanche (Bemisia tabaci) et par des boutures infectées.",
+      symptomes: "Mosaïque jaune-vert sur les feuilles, déformation et réduction du limbe, retard de croissance, forte baisse du rendement en racines.",
+      traitement: "Aucun traitement curatif : arracher les plants sévèrement atteints. Utiliser exclusivement des boutures saines certifiées pour toute multiplication. Lutter contre la mouche blanche (neem, insecticide léger).",
+      prevention: "Boutures saines issues de champs indemnes, variétés résistantes/tolérantes (type TME) distribuées par les services agricoles." },
+    { nom: "Striure brune du manioc (CBSD)", type: "Viral (vecteur : mouche blanche)", gravite: "Élevée",
+      cause: "Virus transmis par la mouche blanche, en expansion en Afrique.",
+      symptomes: "Nécroses brunes dans les racines — souvent invisibles en surface — et taches chlorotiques sur les feuilles.",
+      traitement: "Aucun traitement curatif : détruire les plants infectés et ne jamais réutiliser leurs boutures.",
+      prevention: "Boutures certifiées saines, inspection des racines à la récolte, lutte contre le vecteur." },
+    { nom: "Anthracnose du manioc", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon Colletotrichum gloeosporioides, favorisé par les blessures et la forte humidité.",
+      symptomes: "Chancres/lésions sur les tiges, taches sur les feuilles, dessèchement des jeunes pousses.",
+      traitement: "Couper et brûler les parties atteintes ; fongicide cuprique en cas d'attaque sévère.",
+      prevention: "Boutures saines, éviter les blessures, bonne aération des plants." },
+    { nom: "Bactériose vasculaire du manioc", type: "Bactérien", gravite: "Élevée",
+      cause: "Bactérie Xanthomonas axonopodis pv. manihotis, transmise par l'eau, les outils contaminés et les boutures infectées.",
+      symptomes: "Taches anguleuses huileuses sur les feuilles, flétrissement, exsudat gommeux sur les tiges, mort des pousses.",
+      traitement: "Arracher et brûler les plants atteints, désinfecter les outils de coupe (eau de javel diluée), ne jamais prélever de boutures sur plants malades.",
+      prevention: "Boutures saines, rotation, éviter le travail des champs par temps pluvieux." },
+  ],
+  mais: [
+    { nom: "Rouille du maïs", type: "Fongique", gravite: "Modérée",
+      cause: "Champignons Puccinia sorghi / P. polysora, favorisés par l'humidité, se propagent par spores aériennes.",
+      symptomes: "Pustules brun-rougeâtre sur les deux faces des feuilles, dessèchement prématuré.",
+      traitement: "Fongicide à base de triazole en cas d'attaque sévère avant floraison.",
+      prevention: "Variétés résistantes, rotation, densité de semis adaptée." },
+    { nom: "Charbon commun du maïs", type: "Fongique", gravite: "Faible à modérée",
+      cause: "Champignon Ustilago maydis, présent dans le sol et les débris, pénètre par les blessures.",
+      symptomes: "Galles grises/noires boursouflées sur épis, tiges et feuilles, remplies de spores noires.",
+      traitement: "Couper et brûler les galles avant leur éclatement — ne jamais les laisser au champ.",
+      prevention: "Rotation, semences saines, éviter l'excès d'azote." },
+    { nom: "Striure du maïs (MSV)", type: "Viral (vecteur : cicadelle)", gravite: "Élevée",
+      cause: "Virus transmis par des cicadelles, fréquent en saison chaude.",
+      symptomes: "Fines stries jaunes parallèles aux nervures, nanisme, épis mal remplis.",
+      traitement: "Aucun traitement curatif : arracher tôt les plants très atteints. Lutter contre les cicadelles (neem, insecticide).",
+      prevention: "Semis précoce et groupé, variétés tolérantes, destruction des repousses spontanées (réservoir du virus)." },
+    { nom: "Helminthosporiose du maïs", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon Exserohilum turcicum, favorisé par humidité et températures modérées.",
+      symptomes: "Grandes taches elliptiques gris-brun sur les feuilles, se rejoignant et desséchant le feuillage.",
+      traitement: "Fongicide (mancozèbe) si attaque précoce et sévère.",
+      prevention: "Rotation, destruction des résidus de récolte, variétés résistantes." },
+    { nom: "Chenille légionnaire d'automne", type: "Ravageur", gravite: "Élevée",
+      cause: "Chenille invasive (Spodoptera frugiperda) présente en Afrique depuis 2016, se nourrit du cornet et des feuilles.",
+      symptomes: "Trous en fenêtre sur les jeunes feuilles, excréments dans le cornet, dégâts sur les épis.",
+      traitement: "Extrait de neem ou piment/ail en pulvérisation biologique, cendre + sable dans le cornet, écrasement manuel des œufs et jeunes chenilles, insecticide homologué en dernier recours.",
+      prevention: "Surveillance régulière du cornet, semis précoce, association maïs-niébé, destruction des résidus." },
+  ],
+  riz: [
+    { nom: "Pyriculariose du riz (rice blast)", type: "Fongique", gravite: "Élevée",
+      cause: "Champignon Magnaporthe oryzae — maladie la plus destructrice du riz au monde — favorisé par forte humidité et excès d'azote.",
+      symptomes: "Taches en losange grisâtres à centre clair et bordure brune sur les feuilles, pourriture du cou de la panicule (épis vides).",
+      traitement: "Fongicide systémique (tricyclazole) dès les premiers symptômes ; réduire l'apport d'azote.",
+      prevention: "Variétés résistantes recommandées, gestion équilibrée de l'azote, bon drainage." },
+    { nom: "Helminthosporiose du riz", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon Bipolaris oryzae, favorisé par les carences en potassium et les sols pauvres.",
+      symptomes: "Petites taches ovales brun foncé sur les feuilles, grains tachetés.",
+      traitement: "Fongicide à base de mancozèbe, apport de potassium.",
+      prevention: "Semences saines traitées, fertilisation équilibrée en potassium." },
+    { nom: "Bactériose / flétrissure bactérienne (BLB)", type: "Bactérien", gravite: "Élevée",
+      cause: "Bactérie Xanthomonas oryzae pv. oryzae, transmise par l'eau d'irrigation et les blessures, favorisée par fortes pluies et vent.",
+      symptomes: "Stries jaunâtres à blanchâtres le long des bords des feuilles, flétrissement rapide (« kresek ») chez les jeunes plants.",
+      traitement: "Aucun traitement chimique curatif efficace : drainer l'eau stagnante, éviter l'excès d'azote, arracher les plants sévèrement atteints.",
+      prevention: "Semences saines, variétés résistantes, éviter les blessures aux feuilles, bonne gestion de l'eau." },
+    { nom: "Panachure jaune du riz (RYMV)", type: "Viral", gravite: "Élevée",
+      cause: "Virus endémique en Afrique de l'Ouest, transmis par insectes et contact mécanique.",
+      symptomes: "Mouchetures/panachures jaune-vert sur les feuilles, nanisme, stérilité des épis.",
+      traitement: "Aucun traitement curatif : arracher et détruire les plants atteints, désinfecter les outils.",
+      prevention: "Variétés résistantes (essentielles), désherbage des graminées sauvages hôtes du virus, rotation." },
+  ],
+  niebe: [
+    { nom: "Mosaïque du niébé", type: "Viral (vecteur : puceron)", gravite: "Modérée à élevée",
+      cause: "Virus (CABMV) transmis par pucerons et par semences infectées.",
+      symptomes: "Mosaïque vert clair/foncé sur les feuilles, feuilles déformées et boursouflées, réduction du nombre de gousses.",
+      traitement: "Aucun traitement curatif : arracher les plants atteints, lutter contre les pucerons (extrait de neem).",
+      prevention: "Semences certifiées saines, variétés résistantes, lutte précoce contre les pucerons." },
+    { nom: "Anthracnose du niébé", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon transmis par semences et résidus de culture, favorisé par l'humidité.",
+      symptomes: "Taches brun-rougeâtre sur tiges, feuilles et gousses, chancres allongés.",
+      traitement: "Fongicide cuprique en préventif, arrachage des plants très atteints.",
+      prevention: "Semences saines, rotation, destruction des résidus." },
+    { nom: "Pourriture bactérienne", type: "Bactérien", gravite: "Modérée",
+      cause: "Bactérie du genre Xanthomonas, favorisée par blessures et humidité.",
+      symptomes: "Taches huileuses angulaires, flétrissement, pourriture des gousses.",
+      traitement: "Arracher et brûler les plants atteints, éviter le travail des champs par temps humide.",
+      prevention: "Semences saines, rotation." },
+    { nom: "Striga du niébé", type: "Parasite", gravite: "Modérée à élevée",
+      cause: "Plante parasite du sol germant au contact des racines du niébé.",
+      symptomes: "Flétrissement, jaunissement, petites fleurs violettes visibles au pied des plants.",
+      traitement: "Arrachage manuel avant le grainage du striga, variétés tolérantes.",
+      prevention: "Rotation avec céréales non hôtes, fertilisation azotée adaptée." },
+    { nom: "Puceron noir du niébé", type: "Ravageur (vecteur viral)", gravite: "Modérée",
+      cause: "Insecte piqueur-suceur (Aphis craccivora) formant des colonies denses sur jeunes pousses et gousses.",
+      symptomes: "Déformation des jeunes pousses, miellat collant, fumagine noire, transmission de virus.",
+      traitement: "Extrait de neem ou savon noir dilué en pulvérisation, insecticide en cas d'infestation sévère.",
+      prevention: "Surveillance précoce, bordures répulsives, favoriser les prédateurs naturels (coccinelles)." },
+  ],
+  tomate: [
+    { nom: "Mildiou de la tomate", type: "Fongique", gravite: "Élevée",
+      cause: "Champignon (oomycète) Phytophthora infestans, favorisé par forte humidité et températures fraîches-modérées.",
+      symptomes: "Taches brunes huileuses sur les feuilles avec duvet blanc en dessous, pourriture brune des fruits.",
+      traitement: "Fongicide cuprique (bouillie bordelaise) en préventif dès conditions humides ; arracher et brûler les plants sévèrement atteints.",
+      prevention: "Espacement suffisant, tuteurage, éviter l'arrosage par aspersion en soirée, rotation." },
+    { nom: "Flétrissement bactérien", type: "Bactérien", gravite: "Élevée",
+      cause: "Bactérie du sol Ralstonia solanacearum, pénètre par les racines, favorisée par sol chaud et humide.",
+      symptomes: "Flétrissement soudain et irréversible malgré un sol humide, brunissement vasculaire visible en coupant la tige.",
+      traitement: "Aucun traitement curatif : arracher et détruire immédiatement (ne pas composter). Solarisation du sol si possible.",
+      prevention: "Rotation longue (4 ans hors solanacées), variétés résistantes, bon drainage." },
+    { nom: "Virus des feuilles jaunes en cuillère (TYLCV)", type: "Viral (vecteur : mouche blanche)", gravite: "Élevée",
+      cause: "Virus transmis par la mouche blanche Bemisia tabaci.",
+      symptomes: "Feuilles jaunissantes et recroquevillées en cuillère, nanisme sévère, forte chute de production.",
+      traitement: "Aucun traitement curatif : arracher les plants atteints, lutter contre la mouche blanche (neem, pièges jaunes engluués, filets anti-insectes).",
+      prevention: "Plants sains, pépinière sous filet, variétés tolérantes, lutte précoce contre le vecteur." },
+    { nom: "Alternariose (mildiou alternarien)", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon Alternaria solani, favorisé par l'alternance humidité/chaleur et le stress hydrique.",
+      symptomes: "Taches brunes concentriques en « cible » sur les feuilles âgées, défoliation progressive.",
+      traitement: "Fongicide (mancozèbe ou chlorothalonil), retirer les feuilles basses atteintes.",
+      prevention: "Rotation, paillage, arrosage au pied plutôt qu'en aspersion." },
+    { nom: "Nématodes à galles", type: "Parasite du sol", gravite: "Modérée à élevée",
+      cause: "Vers microscopiques (Meloidogyne spp.) attaquant les racines, favorisés par les sols sableux.",
+      symptomes: "Galles/renflements sur les racines, flétrissement en pleine journée, nanisme.",
+      traitement: "Arracher et détruire les plants atteints ; solarisation du sol (bâche plastique transparente 4-6 semaines en saison chaude).",
+      prevention: "Rotation avec cultures non hôtes (céréales), variétés résistantes, éviter la replantation continue de solanacées." },
+  ],
+  oignon: [
+    { nom: "Mildiou de l'oignon", type: "Fongique", gravite: "Élevée",
+      cause: "Champignon Peronospora destructor, favorisé par forte humidité nocturne et températures douces.",
+      symptomes: "Duvet violacé-gris sur les feuilles, jaunissement puis dessèchement en pointe depuis le sommet.",
+      traitement: "Fongicide cuprique en préventif, arracher les plants sévèrement atteints.",
+      prevention: "Espacement suffisant, éviter l'irrigation en soirée, rotation." },
+    { nom: "Pourriture du col (post-récolte)", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon Botrytis allii, infecte au champ mais se développe surtout au stockage, favorisé par des bulbes mal séchés.",
+      symptomes: "Ramollissement et pourriture grisâtre au niveau du col du bulbe, moisissure grise.",
+      traitement: "Trier et éliminer systématiquement les bulbes atteints ; ne jamais stocker de bulbes humides ou blessés.",
+      prevention: "Séchage complet au soleil avant stockage, ventilation du lieu de stockage, éviter les blessures à la récolte." },
+    { nom: "Teigne de l'oignon (thrips)", type: "Ravageur", gravite: "Modérée",
+      cause: "Insecte piqueur-suceur (Thrips tabaci), prolifère par temps sec et chaud.",
+      symptomes: "Plages argentées/blanchâtres sur les feuilles, déformation, affaiblissement général, vecteur de virus.",
+      traitement: "Extrait de neem ou savon noir en pulvérisation répétée, insecticide en cas de forte infestation.",
+      prevention: "Rotation, élimination des résidus de culture (refuge des thrips), association avec des cultures répulsives (ex. carotte)." },
+    { nom: "Charbon de l'oignon", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon du sol (Urocystis cepulae) attaquant les jeunes plantules.",
+      symptomes: "Stries noires poudreuses sur les jeunes feuilles, bulbes déformés.",
+      traitement: "Aucun traitement curatif efficace : arracher et détruire les plants atteints, ne pas replanter d'oignon sur la parcelle avant plusieurs années.",
+      prevention: "Rotation longue (jusqu'à 8 ans), semences/plants traités, sol bien drainé." },
+  ],
+  mangue: [
+    { nom: "Anthracnose du manguier", type: "Fongique", gravite: "Élevée",
+      cause: "Champignon Colletotrichum spp., favorisé par l'humidité et les pluies pendant la floraison et la fructification.",
+      symptomes: "Taches noires sur feuilles, fleurs et fruits ; chute des fleurs, pourriture noire des fruits mûrs ou en cours de mûrissement.",
+      traitement: "Traitement biologique : pulvérisation à base de cuivre (bouillie bordelaise) dès la floraison. Traitement chimique : fongicide homologué en cas d'attaque sévère, en respectant le délai avant récolte. Couper et brûler les branches et fruits atteints.",
+      prevention: "Taille régulière pour aérer la frondaison, ramassage et destruction des fruits tombés, éviter l'irrigation par aspersion pendant la floraison." },
+    { nom: "Oïdium du manguier", type: "Fongique", gravite: "Modérée",
+      cause: "Champignon Oidium mangiferae, favorisé par nuits fraîches et humides suivies de journées chaudes pendant la floraison.",
+      symptomes: "Duvet blanc poudreux sur fleurs, jeunes feuilles et fruits naissants, chute des fleurs et des jeunes fruits.",
+      traitement: "Soufre mouillable en traitement biologique dès les premiers symptômes ; fongicide systémique homologué en cas d'attaque sévère.",
+      prevention: "Taille pour aérer la frondaison, variétés moins sensibles, surveillance dès le début de la floraison." },
+    { nom: "Cochenille farineuse du manguier", type: "Ravageur", gravite: "Modérée",
+      cause: "Insecte piqueur-suceur (Rastrococcus spp.) formant des amas cotonneux blancs, favorisé par temps chaud et sec.",
+      symptomes: "Amas blancs cotonneux sur rameaux, feuilles et fruits, miellat collant, fumagine noire, affaiblissement de l'arbre.",
+      traitement: "Extrait de neem ou savon noir en pulvérisation répétée, brossage manuel des colonies sur petites branches, insecticide en dernier recours pour infestation sévère.",
+      prevention: "Favoriser les prédateurs naturels (coccinelles), surveillance régulière, éviter l'excès d'azote." },
+    { nom: "Bactériose du manguier (taches noires)", type: "Bactérien", gravite: "Modérée",
+      cause: "Bactérie Xanthomonas campestris pv. mangiferaeindicae, transmise par eau de pluie et blessures, favorisée par vents forts et pluies.",
+      symptomes: "Taches noires anguleuses sur feuilles avec halo jaune, lésions crevassées sur rameaux et fruits.",
+      traitement: "Aucun traitement curatif efficace : couper et brûler les parties atteintes, désinfecter les outils de taille (eau de javel diluée).",
+      prevention: "Brise-vent, éviter la taille par temps humide, variétés moins sensibles." },
+  ],
+};
+
+function riskFromSensor(s) {
+  if (s.humidity > 70 && s.temp > 28) return { level: "Élevé", color: "var(--rust)" };
+  if (s.humidity > 55) return { level: "Modéré", color: "var(--gold)" };
+  return { level: "Faible", color: "var(--leaf)" };
+}
+function dayLabel(jour) {
+  if (jour === 0) return "Aujourd'hui";
+  if (jour === 1) return "Demain";
+  return `Dans ${jour} jours`;
+}
+function severityColor(g) {
+  return g === "Élevée" ? "var(--rust)" : g === "Modérée" ? "var(--gold)" : "var(--leaf)";
+}
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(",")[1]);
+    r.onerror = () => reject(new Error("Lecture du fichier impossible"));
+    r.readAsDataURL(file);
+  });
+}
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str == null ? "" : String(str);
+  return d.innerHTML;
+}
+
+/* Minimal inline icon set (kept intentionally simple) */
+const ICONS = {
+  leaf: (c) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M11 20A7 7 0 0 1 4 13c0-4 3-9 9-9 5 5 5 12-2 16Z"/><path d="M4 13c4 0 7-3 7-9"/></svg>`,
+  camera: (c) => `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>`,
+  alert: (c, s=16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="m10.29 3.86-8.18 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.71-3.14l-8.18-14a2 2 0 0 0-3.44 0Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`,
+  check: (c, s=20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M21.8 10A10 10 0 1 1 17 3.34"/><path d="m9 11 3 3L22 4"/></svg>`,
+  circle: (c, s=18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`,
+  droplet: (c) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M12 2s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12Z"/></svg>`,
+  thermo: (c) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>`,
+  gauge: (c) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>`,
+  chevron: (c) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>`,
+  scanline: (c) => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" x2="21" y1="12" y2="12"/></svg>`,
+  history: (c) => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>`,
+  x: (c) => `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`,
+  copy: (c) => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`,
+  thumbUp: (c) => `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>`,
+  thumbDown: (c) => `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>`,
+  imagePlus: (c) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h9.5"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.814.014L6 21"/></svg>`,
+  sprout: (c) => `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M7 20h10"/><path d="M10 20c0-4.4 3-8 3-8s3 3.6 3 8"/><path d="M12 12C7 12 4 9 4 4c5 0 8 3 8 8Z"/></svg>`,
+  loader: (c) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" class="spin"><line x1="12" x2="12" y1="2" y2="6"/><line x1="12" x2="12" y1="18" y2="22"/><line x1="4.93" x2="7.76" y1="4.93" y2="7.76"/><line x1="16.24" x2="19.07" y1="16.24" y2="19.07"/><line x1="2" x2="6" y1="12" y2="12"/><line x1="18" x2="22" y1="12" y2="12"/><line x1="4.93" x2="7.76" y1="19.07" y2="16.24"/><line x1="16.24" x2="19.07" y1="7.76" y2="4.93"/></svg>`,
+  search: (c) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
+  book: (c) => `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>`,
+};
+
+/* ---------- State ---------- */
+const state = {
+  crop: "mil",
+  photos: [], // {base64, mediaType, previewUrl}
+  status: "idle", // idle | analyzing | done | error
+  result: null,
+  history: [],
+  historyLoaded: false,
+  errorMsg: "",
+  copied: false,
+  feedback: null,
+  planProgress: {},
+  encyclo: { crop: "mil", search: "", openIdx: null },
+  meteo: { loading: true, error: null, data: [], updatedAt: null },
+};
+const risk = riskFromSensor(SENSOR);
+
+/* ---------- Persistence ---------- */
+async function loadHistory() {
+  try {
+    const stored = await window.storage.get(STORAGE_KEY, false);
+    if (stored && stored.value) state.history = JSON.parse(stored.value);
+  } catch (e) {
+    // no history yet
+  } finally {
+    state.historyLoaded = true;
+    render();
+  }
+}
+async function persistHistory(next) {
+  state.history = next;
+  render();
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(next.slice(0, 20)), false);
+  } catch (e) {
+    // best-effort
+  }
+}
+
+/* ---------- Actions ---------- */
+async function handleFiles(fileList) {
+  const files = Array.from(fileList || []).filter((f) => f.type.startsWith("image/"));
+  if (!files.length) return;
+  state.status = "idle";
+  state.result = null;
+  state.errorMsg = "";
+  const room = MAX_PHOTOS - state.photos.length;
+  const toAdd = files.slice(0, Math.max(room, 0));
+  const encoded = await Promise.all(
+    toAdd.map(async (file) => ({
+      base64: await fileToBase64(file),
+      mediaType: file.type,
+      previewUrl: URL.createObjectURL(file),
+    }))
+  );
+  state.photos = [...state.photos, ...encoded].slice(0, MAX_PHOTOS);
+  render();
+}
+function removePhoto(idx) {
+  state.photos = state.photos.filter((_, i) => i !== idx);
+  state.result = null;
+  state.status = "idle";
+  render();
+}
+function resetAll() {
+  state.photos = [];
+  state.result = null;
+  state.status = "idle";
+  state.errorMsg = "";
+  state.feedback = null;
+  state.planProgress = {};
+  render();
+}
+function setCrop(id) {
+  state.crop = id;
+  render();
+}
+function setFeedback(v) {
+  state.feedback = v;
+  render();
+}
+async function loadMeteo() {
+  state.meteo.loading = true;
+  state.meteo.error = null;
+  render();
+  try {
+    const lats = REGIONS.map((r) => r.lat).join(",");
+    const lons = REGIONS.map((r) => r.lon).join(",");
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=precipitation_probability,precipitation&timezone=Africa%2FDakar&forecast_days=2`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Réponse réseau invalide");
+    const json = await res.json();
+    const arr = Array.isArray(json) ? json : [json];
+    const { date: todayDate, hour: curHour } = dakarNow();
+    const tomorrowDate = addDays(todayDate, 1);
+
+    const computeWindow = (hoursArr, isToday) => {
+      const rainHours = hoursArr.filter((x) => x.prob >= 45 || x.mm >= 0.2);
+      const relevant = isToday ? rainHours.filter((x) => x.hour >= curHour) : rainHours;
+      if (relevant.length) return { start: relevant[0].hour, end: relevant[relevant.length - 1].hour, past: false };
+      if (isToday && rainHours.length) return { start: rainHours[0].hour, end: rainHours[rainHours.length - 1].hour, past: true };
+      return null;
+    };
+
+    const results = REGIONS.map((r, i) => {
+      const h = (arr[i] || {}).hourly;
+      if (!h || !h.time) return { name: r.name, error: true };
+      const extractHours = (dateStr) => h.time
+        .map((t, idx) => ({ t, idx }))
+        .filter((o) => o.t.slice(0, 10) === dateStr)
+        .map((o) => ({
+          hour: parseInt(o.t.slice(11, 13), 10),
+          prob: h.precipitation_probability ? h.precipitation_probability[o.idx] : 0,
+          mm: h.precipitation ? h.precipitation[o.idx] : 0,
+        }));
+      const hoursToday = extractHours(todayDate);
+      const hoursTomorrow = extractHours(tomorrowDate);
+      const today = { window: computeWindow(hoursToday, true), maxProb: hoursToday.length ? Math.max(...hoursToday.map((x) => x.prob || 0)) : 0 };
+      const tomorrow = { window: computeWindow(hoursTomorrow, false), maxProb: hoursTomorrow.length ? Math.max(...hoursTomorrow.map((x) => x.prob || 0)) : 0 };
+      return { name: r.name, today, tomorrow };
+    });
+    state.meteo.data = results;
+    state.meteo.updatedAt = new Date();
+    state.meteo.loading = false;
+    render();
+  } catch (e) {
+    state.meteo.loading = false;
+    state.meteo.error = "Prévisions indisponibles — vérifiez la connexion et réessayez.";
+    render();
+  }
+}
+function setEncycloCrop(id) {
+  state.encyclo.crop = id;
+  state.encyclo.openIdx = null;
+  render();
+}
+function setEncycloSearch(v, caret) {
+  state.encyclo.search = v;
+  state.encyclo._focused = true;
+  state.encyclo._caret = caret;
+  render();
+}
+function toggleEncyclo(idx) {
+  state.encyclo.openIdx = state.encyclo.openIdx === idx ? null : idx;
+  render();
+}
+function togglePlanStep(idx) {
+  state.planProgress = { ...state.planProgress, [idx]: !state.planProgress[idx] };
+  if (state.history.length) {
+    const updated = state.history.map((entry, i) => (i === 0 ? { ...entry, planProgress: state.planProgress } : entry));
+    state.history = updated;
+    window.storage.set(STORAGE_KEY, JSON.stringify(updated.slice(0, 20)), false).catch(() => {});
+  }
+  render();
+}
+async function analyze() {
+  if (!state.photos.length) return;
+  state.status = "analyzing";
+  state.errorMsg = "";
+  state.feedback = null;
+  state.planProgress = {};
+  render();
+
+  const cropLabel = (CROPS.find((c) => c.id === state.crop) || {}).label || state.crop;
+  const multiNote = state.photos.length > 1
+    ? ` ${state.photos.length} photos sont fournies (différents angles ou zones de la même plante) : croise-les pour affiner ton diagnostic.`
+    : "";
+  const prompt = `Tu es un agronome expert des cultures d'Afrique de l'Ouest, en particulier de la région de Kaolack au Sénégal. Analyse cette (ou ces) photo(s) de feuille de ${cropLabel}.${multiNote} Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, sans balises markdown, au format exact suivant:
+{"maladie": "nom de la maladie ou 'Aucune anomalie détectée'", "confiance": nombre entre 0 et 100, "gravite": "Faible" | "Modérée" | "Élevée", "symptomes": "description courte des symptômes observés en français", "traitement": "recommandation de traitement pratique et accessible localement", "prevention": "conseil de prévention court", "plan_traitement": [{"jour": 0, "action": "action précise à réaliser", "produit": "produit ou remède local (ex: bouillie bordelaise, extrait de neem, taille des feuilles atteintes)"}], "gravite_si_non_traite": "conséquence courte si aucun traitement n'est appliqué"}
+Le plan_traitement doit contenir entre 3 et 5 étapes concrètes et réalisables avec des moyens disponibles localement (produits phytosanitaires courants au Sénégal ou remèdes naturels), échelonnées sur les jours suivant le diagnostic (jour 0 = aujourd'hui). Si aucune maladie n'est détectée, propose un plan de surveillance léger plutôt qu'un traitement.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [
+          {
+            role: "user",
+            content: [
+              ...state.photos.map((p) => ({ type: "image", source: { type: "base64", media_type: p.mediaType, data: p.base64 } })),
+              { type: "text", text: prompt },
+            ],
+          },
+        ],
+      }),
+    });
+    const data = await response.json();
+    const textBlock = (data.content || []).find((b) => b.type === "text");
+    if (!textBlock) throw new Error("Réponse vide du modèle");
+    const clean = textBlock.text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+    state.result = parsed;
+    state.status = "done";
+    const entry = {
+      ...parsed,
+      crop: cropLabel,
+      cropId: state.crop,
+      time: new Date().toLocaleString("fr-FR"),
+      preview: state.photos[0].previewUrl,
+      photoCount: state.photos.length,
+      planProgress: {},
+    };
+    persistHistory([entry, ...state.history].slice(0, 20));
+  } catch (err) {
+    state.status = "error";
+    state.errorMsg = "L'analyse n'a pas abouti. Vérifiez la ou les photos et réessayez.";
+    render();
+  }
+}
+async function copyReport() {
+  if (!state.result) return;
+  const cropLabel = (CROPS.find((c) => c.id === state.crop) || {}).label || state.crop;
+  const r = state.result;
+  const planText = Array.isArray(r.plan_traitement) && r.plan_traitement.length
+    ? "\nPlan de traitement :\n" + r.plan_traitement.map((s) => `- ${dayLabel(s.jour)} : ${s.action}${s.produit ? ` (${s.produit})` : ""}`).join("\n")
+    : "";
+  const text = `RAPPORT AGROSCAN — ${cropLabel}
+Diagnostic : ${r.maladie} (confiance ${r.confiance}%, gravité ${r.gravite})
+Symptômes : ${r.symptomes}
+Traitement : ${r.traitement}
+Prévention : ${r.prevention}${planText}
+Conditions au moment du scan : humidité ${SENSOR.humidity}%, température ${SENSOR.temp}°C, sol ${SENSOR.soil}%`;
+  try {
+    await navigator.clipboard.writeText(text);
+    state.copied = true;
+    render();
+    setTimeout(() => { state.copied = false; render(); }, 2000);
+  } catch (e) {
+    // clipboard unavailable — ignore
+  }
+}
+
+/* ---------- Render ---------- */
+function chartData() {
+  const byCrop = {};
+  state.history.forEach((h) => { byCrop[h.crop] = (byCrop[h.crop] || 0) + 1; });
+  return Object.entries(byCrop).map(([name, count]) => ({ name, count }));
+}
+
+function render() {
+  const app = document.getElementById("app");
+  const cd = chartData();
+  const maxCount = Math.max(1, ...cd.map((d) => d.count));
+
+  app.innerHTML = `
+    <header class="top">
+      <div class="brand">
+        <div class="brand-mark">${ICONS.leaf("#14140F")}</div>
+        <div>
+          <div class="brand-name">AgroScan</div>
+          <div class="brand-sub">Diagnostic intelligent · Pinto Service Solar</div>
+        </div>
+      </div>
+      <div class="risk-badge">
+        <span class="dot" style="background:${risk.color}"></span>
+        Risque environnemental : <strong style="color:${risk.color}">${risk.level}</strong>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">001 — Diagnostic terrain</div>
+        <h1>Une photo de feuille.<br />Un diagnostic en 20 secondes.</h1>
+        <p>Photographiez une feuille de mil, d'arachide, de manioc ou de riz — sous plusieurs angles si besoin. AgroScan identifie la maladie, évalue sa gravité, et propose un plan de traitement accessible localement.</p>
+        <div class="lead-stats">
+          <div><b>${CROPS.length}</b> cultures couvertes</div>
+          <div><b>${state.history.length}</b> diagnostics enregistrés</div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <svg viewBox="0 0 200 220" width="180" height="198" style="position:relative;z-index:1">
+          <path d="M100 10 C40 40 20 110 60 170 C75 195 100 210 100 210 C100 210 125 195 140 170 C180 110 160 40 100 10 Z" fill="none" stroke="var(--leaf)" stroke-width="2.5"/>
+          <path d="M100 15 L100 205 M100 60 L65 45 M100 60 L135 45 M100 105 L58 92 M100 105 L142 92 M100 150 L64 145 M100 150 L136 145" stroke="var(--leaf)" stroke-width="1.2" opacity="0.55" fill="none"/>
+          <circle cx="118" cy="88" r="5" fill="var(--rust)" opacity="0.85"/>
+          <circle cx="80" cy="130" r="3.5" fill="var(--rust)" opacity="0.6"/>
+        </svg>
+        <div class="scan-frame"><div class="scanline"></div></div>
+        <div class="scan-caption">${ICONS.scanline("#9C9686")} analyse en cours…</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">002 — Sélection de la culture</div>
+      <div class="chips-row">
+        ${CROPS.map((c) => `<button class="chip ${c.id === state.crop ? "active" : ""}" data-crop="${c.id}">${c.label}</button>`).join("")}
+      </div>
+
+      <div class="eyebrow">003 — Photo(s) de la feuille <span style="color:var(--muted);text-transform:none;letter-spacing:0"> · jusqu'à ${MAX_PHOTOS}, plusieurs angles recommandés</span></div>
+
+      ${state.photos.length > 0 ? `
+        <div class="photo-grid">
+          ${state.photos.map((p, i) => `
+            <div class="photo-thumb-wrap">
+              <img src="${p.previewUrl}" alt="Photo ${i + 1}" />
+              <button class="thumb-x" data-remove="${i}" aria-label="Retirer la photo">${ICONS.x("#EFE7D3")}</button>
+            </div>
+          `).join("")}
+          ${state.photos.length < MAX_PHOTOS ? `<button class="add-more-tile" id="add-more" aria-label="Ajouter une photo">${ICONS.imagePlus("#C9A227")}</button>` : ""}
+        </div>
+      ` : `
+        <div class="drop" id="drop-zone" role="button" tabindex="0">
+          ${ICONS.camera("#C9A227")}
+          <div class="drop-title">Glissez une ou plusieurs photos, ou touchez pour capturer</div>
+          <div class="drop-sub">JPG, PNG — prise en pleine lumière recommandée</div>
+        </div>
+      `}
+      <input type="file" id="file-input" accept="image/*" capture="environment" multiple style="display:none" />
+
+      ${state.photos.length > 0 ? `
+        <div class="btn-row">
+          <button class="btn-primary" id="analyze-btn" ${state.status === "analyzing" ? "disabled" : ""}>
+            ${state.status === "analyzing" ? `${ICONS.loader("#14140F")} Analyse…` : `Analyser ${state.photos.length > 1 ? `(${state.photos.length} photos)` : ""} ${ICONS.chevron("#14140F")}`}
+          </button>
+          <button class="btn-ghost" id="reset-btn">Recommencer</button>
+        </div>
+      ` : ""}
+
+      ${state.status === "analyzing" ? `
+        <div class="skeleton-wrap">
+          <div class="skeleton-line" style="width:40%"></div>
+          <div class="skeleton-line" style="width:90%"></div>
+          <div class="skeleton-line" style="width:75%"></div>
+          <div class="skeleton-line" style="width:60%"></div>
+        </div>
+      ` : ""}
+
+      ${state.status === "error" ? `<div class="error-box">${ICONS.alert("var(--rust)")} ${escapeHtml(state.errorMsg)}</div>` : ""}
+
+      ${state.status === "done" && state.result ? renderResult() : ""}
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">005 — Conditions environnementales (capteurs IoT)</div>
+      <div class="metrics-row">
+        <div class="metric-card">${ICONS.droplet("#C9A227")}<div class="metric-val">${SENSOR.humidity}%</div><div class="metric-label">Humidité</div></div>
+        <div class="metric-card">${ICONS.thermo("#C9A227")}<div class="metric-val">${SENSOR.temp}°C</div><div class="metric-label">Température</div></div>
+        <div class="metric-card">${ICONS.gauge("#C9A227")}<div class="metric-val">${SENSOR.soil}%</div><div class="metric-label">Humidité du sol</div></div>
+      </div>
+      <div class="sensor-note">Ces conditions favorisent le développement de champignons pathogènes — un scan régulier est recommandé tant que le risque reste ${risk.level.toLowerCase()}.</div>
+    </section>
+
+    ${renderEncyclopedia()}
+
+    ${renderMeteo()}
+
+    ${state.historyLoaded && state.history.length > 0 ? `
+      <section class="panel">
+        <div class="eyebrow">${ICONS.history("#C9A227")} Historique &amp; tendances</div>
+        ${cd.length > 1 ? `
+          <div class="chart-wrap">
+            ${cd.map((d) => `
+              <div class="chart-bar-col">
+                <div class="chart-count">${d.count}</div>
+                <div class="chart-bar" style="height:${Math.max(6, (d.count / maxCount) * 90)}px"></div>
+                <div class="chart-label">${escapeHtml(d.name)}</div>
+              </div>
+            `).join("")}
+          </div>
+        ` : ""}
+        <div class="history-list">
+          ${state.history.map((h) => `
+            <div class="history-item">
+              <img class="history-thumb" src="${h.preview}" alt="" />
+              <div style="flex:1">
+                <div class="history-title">${escapeHtml(h.maladie)} <span class="history-sub">· ${escapeHtml(h.crop)}${h.photoCount > 1 ? ` · ${h.photoCount} photos` : ""}</span></div>
+                <div class="history-time">${escapeHtml(h.time)}</div>
+              </div>
+              <span class="severity-tag" style="border-color:${severityColor(h.gravite)};color:${severityColor(h.gravite)}">${escapeHtml(h.gravite)}</span>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+    ` : ""}
+
+    <footer class="bottom">AgroScan s'intègre à l'écosystème SalinConnect pour croiser diagnostic sanitaire et données de salinité/sol. Historique conservé sur cet appareil.</footer>
+  `;
+
+  bindEvents();
+}
+
+function renderResult() {
+  const r = state.result;
+  const sevColor = severityColor(r.gravite);
+  const isHealthy = r.maladie === "Aucune anomalie détectée";
+  const plan = Array.isArray(r.plan_traitement) ? r.plan_traitement : [];
+  const doneCount = Object.values(state.planProgress).filter(Boolean).length;
+
+  return `
+    <div class="result-card">
+      <div class="result-header">
+        <div class="eyebrow">004 — Rapport de diagnostic</div>
+        <span class="severity-tag" style="border-color:${sevColor};color:${sevColor}">${escapeHtml(r.gravite)}</span>
+      </div>
+      <div class="diagnosis-row">
+        ${isHealthy ? ICONS.check("var(--leaf)", 20) : ICONS.alert("var(--rust)", 20)}
+        <div class="diagnosis-name">${escapeHtml(r.maladie)}</div>
+        <div class="confidence">${r.confiance}% confiance</div>
+      </div>
+      <div class="result-grid">
+        <div><div class="field-label">Symptômes observés</div><div class="field-value">${escapeHtml(r.symptomes)}</div></div>
+        <div><div class="field-label">Traitement recommandé</div><div class="field-value">${escapeHtml(r.traitement)}</div></div>
+        <div><div class="field-label">Prévention</div><div class="field-value">${escapeHtml(r.prevention)}</div></div>
+      </div>
+
+      ${plan.length ? `
+        <div class="plan-block">
+          <div class="plan-header">
+            <div class="field-label">${ICONS.sprout("#C9A227")} Plan de traitement</div>
+            <span style="font-size:12px;color:var(--muted)">${doneCount}/${plan.length} étapes faites</span>
+          </div>
+          <div class="plan-progress-bar"><div class="plan-progress-fill" style="width:${(doneCount / plan.length) * 100}%"></div></div>
+          <div class="plan-list">
+            ${plan.map((step, i) => `
+              <button class="plan-item ${state.planProgress[i] ? "done" : ""}" data-plan-step="${i}">
+                ${state.planProgress[i] ? ICONS.check("var(--leaf)", 18) : ICONS.circle("var(--muted)", 18)}
+                <div>
+                  <div class="plan-day">${dayLabel(step.jour)}</div>
+                  <div class="plan-action">${escapeHtml(step.action)}</div>
+                  ${step.produit ? `<div class="plan-produit">${escapeHtml(step.produit)}</div>` : ""}
+                </div>
+              </button>
+            `).join("")}
+          </div>
+          ${r.gravite_si_non_traite ? `<div class="plan-warning">${ICONS.alert("var(--rust)", 13)} Sans traitement : ${escapeHtml(r.gravite_si_non_traite)}</div>` : ""}
+        </div>
+      ` : ""}
+
+      <div class="result-actions">
+        <button class="btn-ghost-small" id="copy-btn">
+          ${state.copied ? `${ICONS.check("#EFE7D3", 14)} Copié` : `${ICONS.copy("#EFE7D3")} Copier le rapport`}
+        </button>
+        <div class="feedback-group">
+          <span style="font-size:12.5px;color:var(--muted)">Diagnostic utile ?</span>
+          <button class="fb-btn ${state.feedback === "up" ? "active-up" : ""}" id="fb-up" aria-label="Diagnostic confirmé">${ICONS.thumbUp(state.feedback === "up" ? "var(--leaf)" : "#9C9686")}</button>
+          <button class="fb-btn ${state.feedback === "down" ? "active-down" : ""}" id="fb-down" aria-label="Diagnostic à revoir">${ICONS.thumbDown(state.feedback === "down" ? "var(--rust)" : "#9C9686")}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderEncyclopedia() {
+  const cropLabel = (CROPS.find((c) => c.id === state.encyclo.crop) || {}).label || state.encyclo.crop;
+  const list = (DISEASE_DB[state.encyclo.crop] || []).filter((d) => {
+    const q = state.encyclo.search.trim().toLowerCase();
+    if (!q) return true;
+    return (d.nom + " " + d.symptomes + " " + d.cause).toLowerCase().includes(q);
+  });
+  return `
+    <section class="panel">
+      <div class="eyebrow">${ICONS.book("#C9A227")} 006 — Encyclopédie des maladies · causes &amp; solutions d'éradication</div>
+      <div class="chips-row">
+        ${CROPS.map((c) => `<button class="chip ${c.id === state.encyclo.crop ? "active" : ""}" data-encyclo-crop="${c.id}">${c.label}</button>`).join("")}
+      </div>
+      <div class="search-row">
+        <span class="search-icon">${ICONS.search("#9C9686")}</span>
+        <input type="text" id="encyclo-search" placeholder="Rechercher une maladie, un symptôme (${cropLabel})…" value="${escapeHtml(state.encyclo.search)}" />
+      </div>
+      <div class="disease-list">
+        ${list.length === 0 ? `<div class="disease-empty">Aucune maladie référencée pour ce filtre.</div>` : list.map((d, i) => {
+          const sevColor = severityColor(d.gravite);
+          const isOpen = state.encyclo.openIdx === i;
+          return `
+            <div class="disease-card ${isOpen ? "open" : ""}">
+              <button class="disease-head" data-encyclo-toggle="${i}">
+                <span class="disease-chevron">${ICONS.chevron("#9C9686")}</span>
+                <div style="flex:1">
+                  <div class="disease-name">${escapeHtml(d.nom)}</div>
+                  <div class="disease-type">${escapeHtml(d.type)}</div>
+                </div>
+                <span class="severity-tag" style="border-color:${sevColor};color:${sevColor}">${escapeHtml(d.gravite)}</span>
+              </button>
+              ${isOpen ? `
+                <div class="disease-body">
+                  <div><div class="field-label">Cause</div><div class="field-value">${escapeHtml(d.cause)}</div></div>
+                  <div><div class="field-label">Symptômes</div><div class="field-value">${escapeHtml(d.symptomes)}</div></div>
+                  <div><div class="field-label">${ICONS.sprout("#C9A227")} Solution d'éradication</div><div class="field-value">${escapeHtml(d.traitement)}</div></div>
+                  <div><div class="field-label">Prévention</div><div class="field-value">${escapeHtml(d.prevention)}</div></div>
+                </div>
+              ` : ""}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderMeteo() {
+  const m = state.meteo;
+  const updated = m.updatedAt ? m.updatedAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Dakar" }) : null;
+  return `
+    <section class="panel">
+      <div class="meteo-header-row">
+        <div class="eyebrow" style="margin-bottom:0">${ICONS.scanline("#C9A227")} 007 — Météo satellite · pluie par région (14 régions)</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${updated ? `<span class="meteo-updated">Maj ${updated}</span>` : ""}
+          <button class="btn-ghost-small" id="meteo-refresh">${m.loading ? ICONS.loader("#EFE7D3") : ICONS.scanline("#EFE7D3")} Actualiser</button>
+        </div>
+      </div>
+      ${m.loading ? `
+        <div class="skeleton-wrap">
+          <div class="skeleton-line" style="width:60%"></div>
+          <div class="skeleton-line" style="width:90%"></div>
+          <div class="skeleton-line" style="width:75%"></div>
+        </div>
+      ` : m.error ? `
+        <div class="error-box">${ICONS.alert("var(--rust)")} ${escapeHtml(m.error)}</div>
+      ` : `
+        <div class="meteo-grid">
+          ${m.data.map((r) => {
+            if (r.error) {
+              return `
+                <div class="meteo-card">
+                  <div class="meteo-card-head"><span class="meteo-region">${escapeHtml(r.name)}</span><span class="dot" style="background:var(--muted)"></span></div>
+                  <div class="meteo-status" style="color:var(--muted)">Données indisponibles</div>
+                </div>
+              `;
+            }
+            const describe = (day, label) => {
+              let color, text;
+              if (!day.window) { color = "var(--leaf)"; text = `${label} : pas de pluie prévue`; }
+              else if (day.window.past) { color = "var(--muted)"; text = `${label} : pluie passée ${hourLabel(day.window.start)}–${hourLabel(day.window.end)}`; }
+              else if (day.window.start === day.window.end) { color = "var(--rust)"; text = `${label} : pluie probable vers ${hourLabel(day.window.start)}`; }
+              else { color = "var(--rust)"; text = `${label} : pluie probable ${hourLabel(day.window.start)}–${hourLabel(day.window.end)}`; }
+              return { color, text };
+            };
+            const t = describe(r.today, "Aujourd'hui");
+            const d = describe(r.tomorrow, "Demain");
+            return `
+              <div class="meteo-card">
+                <div class="meteo-card-head">
+                  <span class="meteo-region">${escapeHtml(r.name)}</span>
+                  <span class="dot" style="background:${t.color}"></span>
+                </div>
+                <div class="meteo-status" style="color:${t.color}">${t.text}</div>
+                <div class="meteo-status" style="color:${d.color};margin-top:4px">${d.text}</div>
+                <div class="meteo-prob">Proba. max : ${Math.round(r.today.maxProb)}% auj. · ${Math.round(r.tomorrow.maxProb)}% demain</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `}
+      <div class="sensor-note" style="margin-top:14px">Prévisions horaires sur 2 jours issues de modèles satellite/numériques (Open-Meteo), fuseau Africa/Dakar. Un seuil de probabilité ≥ 45% ou de précipitation ≥ 0,2 mm/h est utilisé pour signaler une heure de pluie.</div>
+    </section>
+  `;
+}
+
+function bindEvents() {
+  document.querySelectorAll("[data-crop]").forEach((el) => {
+    el.addEventListener("click", () => setCrop(el.getAttribute("data-crop")));
+  });
+  document.querySelectorAll("[data-remove]").forEach((el) => {
+    el.addEventListener("click", () => removePhoto(parseInt(el.getAttribute("data-remove"), 10)));
+  });
+  document.querySelectorAll("[data-plan-step]").forEach((el) => {
+    el.addEventListener("click", () => togglePlanStep(parseInt(el.getAttribute("data-plan-step"), 10)));
+  });
+  document.querySelectorAll("[data-encyclo-crop]").forEach((el) => {
+    el.addEventListener("click", () => setEncycloCrop(el.getAttribute("data-encyclo-crop")));
+  });
+  document.querySelectorAll("[data-encyclo-toggle]").forEach((el) => {
+    el.addEventListener("click", () => toggleEncyclo(parseInt(el.getAttribute("data-encyclo-toggle"), 10)));
+  });
+  const encycloSearch = document.getElementById("encyclo-search");
+  if (encycloSearch) {
+    encycloSearch.addEventListener("input", (e) => setEncycloSearch(e.target.value, e.target.selectionStart));
+    encycloSearch.addEventListener("blur", () => { state.encyclo._focused = false; });
+    if (state.encyclo._focused) {
+      encycloSearch.focus();
+      const pos = state.encyclo._caret != null ? state.encyclo._caret : encycloSearch.value.length;
+      encycloSearch.setSelectionRange(pos, pos);
+    }
+  }
+  const fileInput = document.getElementById("file-input");
+  const dropZone = document.getElementById("drop-zone");
+  const addMore = document.getElementById("add-more");
+  if (fileInput) fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
+  if (dropZone) {
+    dropZone.addEventListener("click", () => fileInput.click());
+    dropZone.addEventListener("keydown", (e) => { if (e.key === "Enter") fileInput.click(); });
+    dropZone.addEventListener("dragover", (e) => e.preventDefault());
+    dropZone.addEventListener("drop", (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
+  }
+  if (addMore) addMore.addEventListener("click", () => fileInput.click());
+  const analyzeBtn = document.getElementById("analyze-btn");
+  if (analyzeBtn) analyzeBtn.addEventListener("click", analyze);
+  const resetBtn = document.getElementById("reset-btn");
+  if (resetBtn) resetBtn.addEventListener("click", resetAll);
+  const copyBtn = document.getElementById("copy-btn");
+  if (copyBtn) copyBtn.addEventListener("click", copyReport);
+  const fbUp = document.getElementById("fb-up");
+  if (fbUp) fbUp.addEventListener("click", () => setFeedback("up"));
+  const fbDown = document.getElementById("fb-down");
+  if (fbDown) fbDown.addEventListener("click", () => setFeedback("down"));
+  const meteoRefresh = document.getElementById("meteo-refresh");
+  if (meteoRefresh) meteoRefresh.addEventListener("click", loadMeteo);
+}
+
+render();
+loadHistory();
+loadMeteo();
+</script>
+</body>
+</html>
